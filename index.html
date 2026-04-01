@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>مثلث الحسنة</title>
+
+<style>
+body{
+  font-family: Arial;
+  background:#0e0e0e;
+  color:#fff;
+  text-align:center;
+  padding:30px;
+}
+input{
+  padding:12px;
+  font-size:18px;
+  width:260px;
+}
+button{
+  padding:10px 20px;
+  margin-top:10px;
+  font-size:18px;
+  cursor:pointer;
+}
+
+/* المثلث */
+.triangle{
+  position:relative;
+  width:340px;
+  height:280px;
+  margin:40px auto;
+}
+
+/* النقاط */
+.point{
+  position:absolute;
+  width:160px;
+  text-align:center;
+}
+
+.top{
+  top:0;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+.right{
+  bottom:0;
+  right:0;
+}
+
+.left{
+  bottom:0;
+  left:0;
+}
+
+/* الاسم */
+.name{
+  font-size:22px;
+  color:#00ffcc;
+}
+
+/* الشرح */
+.desc{
+  font-size:13px;
+  color:#aaa;
+  margin-top:5px;
+}
+
+/* خطوط المثلث */
+svg{
+  position:absolute;
+  top:0;
+  left:0;
+}
+
+/* تلوين الحروف */
+.highlight{
+  color:#ffcc00;
+}
+</style>
+</head>
+
+<body>
+
+<h2>مثلث الحسنة</h2>
+
+<input id="nameInput" placeholder="اكتب اسمك">
+<br>
+<button onclick="run()">اكشف مثلثك</button>
+
+<div id="result"></div>
+
+<script>
+
+// 🔒 قائمتك (بدون أي إضافة)
+const rawNames = [
+"الواحد","العفو","البر","الشهيد","الباری","اللطيف","العظيم","الجبار","الظاهر","الرقيب",
+"الوهاب","الحليم","الصمد","القدوس","السلام","الكفيل","القهار","الواسع","الأول","المجيب",
+"المتين","المجيد","الوكيل","الحق","الأخر","الحميد","الباطن","المبين","القريب","المؤمن",
+"المهيمن","المصور","الهاد","الأحد","الودود","الخبير","الرأوف","الغنى","فعال لما يريد",
+"رب المشرق و المغرب","أشد بأسا","رب المشرقين","رب المغربين","شديد المحال","خير ثوابا",
+"ذي الطول","على كل شيء مقيت","رب السماوات والأرض","خير المنزلين","رب الأرض",
+"رفيع الدرجات","المستعان على ما تصفون","جاعل الملائكة رسلا","خير الوارثين","رب الشعرى",
+"ذو الجلال والاكرام","ذي المعارج","ذو الفضل","شديد العذاب","رب العالمين","غالب على أمره",
+"أشد تنكيلا","خير الفاصلين","رب السماوات","بديع السماوات والأرض","فاطر السماوات والأرض",
+"مخرج ما تحذرون","مخرج ما كنتم تكتمون","مخرج الميت من الحى","الغفور","العليم","الولى",
+"بكل شيء عليم","ولى المؤمنين","الرحمن","الرحيم","الملك","ملك الناس","الخالق","الخلاق",
+"رب الناس","شديد العقاب","سريع العقاب","الحسيب","أسرع الحاسبين","النصير","نعم النصير",
+"القدير","أهل التقوى","القادر","الواق","الأعلى","العلى","الحكيم","أحكم الحاكمين",
+"فالق الاصباح","رب الفلق","ذو العرش","ذي العرش","الكريم","الأكرم","الحي","محي الموتى",
+"قابل التوب","التواب","الكبير","المتكبر","الحفيظ","خير حاف","خير الفات","خير الرازقين",
+"الفتاح","الرزاق","القوي","ذو القوة","بصير بالعباد","البصير","العزيز","رب العزة",
+"المحيط","محيط بالكافرين","القاهر فوق عباده","سميع الدعاء","ذو انتقام","السميع",
+"القيوم","الشكور","نور السماوات والأرض","خير الماكرين","الشاكر","متم نوره","أسرع مكرا",
+"عليم بذات الصدور","غافر الذنب","علام الغيوب","ولى المتقين","ارحم الراحمين","نعم المولى",
+"ذو الرحمة","مالك الملك","خالق كل شيء","الله الناس","خير عقبا","سريع الحساب",
+"خير الناصرين","المقتدر","المتعال","خير الحاكمين","فالق الحب والنوى","رب العرش",
+"مالك يوم الدين","أحسن الخالقين","جامع الناس","ذو عقاب اليم","أهل المغفرة",
+"واسع المغفرة","عالم الغيب والشهادة","الوال","خير الراحمين","مليك","خير الغافرين",
+"بكل خلق عليم","ولى الذين أمنوا","ذو مغفرة"
+];
+
+const allNames = [...new Set(rawNames)];
+const single = allNames.filter(n => !n.includes(" "));
+const multi  = allNames.filter(n => n.includes(" "));
+
+// normalize
+function normalize(str){
+return str
+.replace(/[ًٌٍَُِّْ]/g,'')
+.replace(/[أإآ]/g,'ا')
+.replace(/ى/g,'ي')
+.replace(/ؤ/g,'و')
+.replace(/ئ/g,'ي')
+.replace(/^ال/, '')
+.replace(/\s/g,'');
+}
+
+// تسلسل
+function hasSequence(name,input){
+let i=0;
+for(let c of name){
+if(c===input[i]) i++;
+if(i===input.length) return true;
+}
+return false;
+}
+
+// تقييم
+function score(name,input,needed,isSingle){
+
+let covers=false;
+for(let ch of needed){
+if(name.includes(ch)) covers=true;
+}
+if(!covers) return 0;
+
+let s=0;
+
+for(let ch of needed){
+if(name.includes(ch)) s+=50;
+}
+
+if(name.includes(input[0])) s+=20;
+if(input[1] && name.includes(input[1])) s+=10;
+if(name.includes(input[input.length-1])) s+=20;
+
+if(hasSequence(name,input)) s+=20;
+if(name.includes(input)) s+=30;
+
+if(isSingle) s+=25;
+else s-=10;
+
+return s;
+}
+
+// اختيار
+function pick(pool,used,needed,isSingle){
+
+let best=null;
+
+for(let n of pool){
+
+if(used.includes(n)) continue;
+
+let pure=normalize(n);
+let sc=score(pure,input,needed,isSingle);
+
+if(sc<=0) continue;
+
+if(!best || sc>best.score){
+best={name:n,score:sc};
+}
+}
+
+return best?best.name:null;
+}
+
+// تلوين الحروف
+function highlight(name,input){
+let pure=normalize(name);
+let out="";
+for(let ch of name){
+if(input.includes(ch)){
+out+=`<span class="highlight">${ch}</span>`;
+}else{
+out+=ch;
+}
+}
+return out;
+}
+
+// شرح
+function explain(name,input,role){
+
+let pure=normalize(name);
+let reasons=[];
+let letters=[];
+
+for(let ch of input){
+if(pure.includes(ch)) letters.push(ch);
+}
+
+if(role==="start") reasons.push("تم اختياره لاحتوائه على الحرف الأول من الاسم");
+if(role==="end") reasons.push("تم اختياره لاحتوائه على الحرف الأخير من الاسم");
+if(role==="cover") reasons.push("يساهم في اكتمال تغطية حروف الاسم");
+if(role==="fix") reasons.push("تم اختياره لتعزيز التوافق مع بنية الاسم");
+
+if(hasSequence(pure,input)) reasons.push("يحافظ على تسلسل حروف الاسم");
+if(pure.includes(input)) reasons.push("يتطابق مع حروف الاسم بشكل مباشر");
+
+if(letters.length) reasons.push("يتضمن الحروف: "+letters.join(" + "));
+
+return reasons.join(" • ");
+}
+
+let input;
+
+function run(){
+
+let raw=document.getElementById("nameInput").value;
+
+let normalized=normalize(raw);
+if(normalized.startsWith("ال")) normalized=normalized.slice(2);
+
+input=normalized;
+if(!input) return;
+
+let used=[];
+let remaining=new Set(input.split(''));
+
+// 1
+let n1=pick(single,used,new Set([input[0]]),true)
+     || pick(multi,used,new Set([input[0]]),false);
+
+if(n1){
+used.push(n1);
+normalize(n1).split('').forEach(c=>remaining.delete(c));
+}
+
+// 2
+let n2=pick(single,used,new Set([input[input.length-1]]),true)
+     || pick(multi,used,new Set([input[input.length-1]]),false);
+
+if(n2){
+used.push(n2);
+normalize(n2).split('').forEach(c=>remaining.delete(c));
+}
+
+// 3
+let n3;
+
+if(remaining.size===0){
+n3=pick(single,used,new Set([input[0],input[input.length-1]]),true)
+  || pick(single,used,new Set(input.split('')),true)
+  || pick(multi,used,new Set(input.split('')),false);
+}else{
+n3=pick(single,used,remaining,true)
+  || pick(multi,used,remaining,false);
+}
+
+if(!n3){
+n3=pick(single,used,new Set(input.split('')),true)
+  || pick(multi,used,new Set(input.split('')),false);
+}
+
+if(n3) used.push(n3);
+
+// ضمان 3
+while(used.length<3){
+let extra=pick(single,used,new Set(input.split('')),true)
+        || pick(multi,used,new Set(input.split('')),false);
+if(extra) used.push(extra);
+else break;
+}
+
+// عرض مثلث
+let html=`
+<div class="triangle">
+
+<svg width="340" height="280">
+<polygon points="170,20 320,250 20,250"
+style="fill:none;stroke:#444;stroke-width:2"/>
+</svg>
+
+<div class="point top">
+<div class="name">${highlight(used[0],input)}</div>
+<div class="desc">${explain(used[0],input,"start")}</div>
+</div>
+
+<div class="point right">
+<div class="name">${highlight(used[1],input)}</div>
+<div class="desc">${explain(used[1],input,"end")}</div>
+</div>
+
+<div class="point left">
+<div class="name">${highlight(used[2],input)}</div>
+<div class="desc">${explain(used[2],input,"fix")}</div>
+</div>
+
+</div>
+`;
+
+document.getElementById("result").innerHTML=html;
+
+}
+
+</script>
+
+</body>
+</html>
