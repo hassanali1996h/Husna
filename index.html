@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>مثلث الحسنة</title>
+<style>
+body { font-family: Arial; background:#111; color:#fff; text-align:center; padding:40px; }
+input { padding:10px; font-size:18px; width:200px; }
+button { padding:10px 20px; font-size:18px; margin-top:15px; cursor:pointer; }
+.result { margin-top:30px; font-size:26px; color:#00ffcc; }
+</style>
+</head>
+
+<body>
+
+<h2>مثلث الحسنة</h2>
+
+<input id="nameInput" placeholder="اكتب اسمك">
+<br>
+<button onclick="run()">اكشف مثلثك</button>
+
+<div class="result" id="result"></div>
+
+<script>
+
+// 🔒 جميع الأسماء من الملف
+const allNames = [
+"الرحمن","الرحيم","الملك","القدوس","السلام","المؤمن","المهيمن","العزيز","الجبار","المتكبر",
+"الخالق","البارئ","المصور","الغفار","القهار","الوهاب","الرزاق","الفتاح","العليم","القابض",
+"الباسط","الخافض","الرافع","المعز","المذل","السميع","البصير","الحكم","العدل","اللطيف",
+"الخبير","الحليم","العظيم","الغفور","الشكور","العلي","الكبير","الحفيظ","المقيت","الحسيب",
+"الجليل","الكريم","الرقيب","المجيب","الواسع","الحكيم","الودود","المجيد","الباعث","الشهيد",
+"الحق","الوكيل","القوي","المتين","الولي","الحميد","المحصي","المبدئ","المعيد","المحيي",
+"المميت","الحي","القيوم","الواجد","الماجد","الواحد","الأحد","الصمد","القادر","المقتدر",
+"المقدم","المؤخر","الأول","الآخر","الظاهر","الباطن","الوالي","المتعالي","البر","التواب",
+"المنتقم","العفو","الرؤوف","مالك","ذو الجلال","ذو الإكرام",
+"أحسن الخالقين","خير الرازقين","رب العالمين","مالك يوم الدين","غافر الذنب"
+];
+
+// فصل فردي ومركب
+const single = allNames.filter(n => !n.includes(" "));
+const multi  = allNames.filter(n => n.includes(" "));
+
+// تنظيف
+function normalize(str){
+return str.replace(/[ًٌٍَُِّْ]/g,'').replace(/[^ء-ي]/g,'');
+}
+
+// تغطية الحروف
+function coverageScore(name, input){
+let score = 0;
+for(let ch of input){
+if(name.includes(ch)) score++;
+}
+return score;
+}
+
+// اختيار اسم حسب شرط
+function pickName(pool, used, condition){
+let best = null;
+
+for(let n of pool){
+if(used.includes(n)) continue;
+
+let pure = normalize(n);
+if(!condition(pure)) continue;
+
+let score = coverageScore(pure, input);
+
+if(!best || score > best.score){
+best = {name:n, score:score};
+}
+}
+
+return best ? best.name : null;
+}
+
+let input;
+
+function run(){
+
+input = normalize(document.getElementById("nameInput").value);
+if(!input) return;
+
+let first = input[0];
+let last  = input[input.length - 1];
+
+let used = [];
+let covered = new Set();
+
+// 1️⃣ الاسم الأول (البداية)
+let n1 = pickName(single, used, n => n.includes(first)) 
+      || pickName(multi, used, n => n.includes(first));
+
+used.push(n1);
+normalize(n1).split('').forEach(c=>covered.add(c));
+
+// 2️⃣ الاسم الثاني (النهاية)
+let n2 = pickName(single, used, n => n.includes(last)) 
+      || pickName(multi, used, n => n.includes(last));
+
+used.push(n2);
+normalize(n2).split('').forEach(c=>covered.add(c));
+
+// 3️⃣ الاسم الثالث (إكمال)
+let n3 = pickName(single, used, n => {
+let need = [...input].some(c => !covered.has(c));
+return need && coverageScore(n, input) > 0;
+}) || pickName(multi, used, n => true);
+
+used.push(n3);
+
+// عرض
+document.getElementById("result").innerHTML =
+used.join(" ✦ ");
+
+}
+
+</script>
+
+</body>
+</html>
