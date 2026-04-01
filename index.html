@@ -5,9 +5,10 @@
 <title>مثلث الحسنة</title>
 <style>
 body { font-family: Arial; background:#111; color:#fff; text-align:center; padding:40px; }
-input { padding:10px; font-size:18px; width:200px; }
+input { padding:10px; font-size:18px; width:220px; }
 button { padding:10px 20px; font-size:18px; margin-top:15px; cursor:pointer; }
 .result { margin-top:30px; font-size:26px; color:#00ffcc; }
+.note { margin-top:15px; font-size:14px; color:#aaa; }
 </style>
 </head>
 
@@ -20,10 +21,11 @@ button { padding:10px 20px; font-size:18px; margin-top:15px; cursor:pointer; }
 <button onclick="run()">اكشف مثلثك</button>
 
 <div class="result" id="result"></div>
+<div class="note" id="note"></div>
 
 <script>
 
-// 🔒 جميع الأسماء من الملف
+// 🔒 جميع الأسماء (كما في الملف)
 const allNames = [
 "الرحمن","الرحيم","الملك","القدوس","السلام","المؤمن","المهيمن","العزيز","الجبار","المتكبر",
 "الخالق","البارئ","المصور","الغفار","القهار","الوهاب","الرزاق","الفتاح","العليم","القابض",
@@ -37,35 +39,76 @@ const allNames = [
 "أحسن الخالقين","خير الرازقين","رب العالمين","مالك يوم الدين","غافر الذنب"
 ];
 
-// فصل فردي ومركب
+// فصل
 const single = allNames.filter(n => !n.includes(" "));
 const multi  = allNames.filter(n => n.includes(" "));
 
-// تنظيف
+// 🔥 Normalize قوي
 function normalize(str){
-return str.replace(/[ًٌٍَُِّْ]/g,'').replace(/[^ء-ي]/g,'');
+return str
+.replace(/[ًٌٍَُِّْ]/g,'')
+.replace(/[أإآ]/g,'ا')
+.replace(/ى/g,'ي')
+.replace(/ؤ/g,'و')
+.replace(/ئ/g,'ي')
+.replace(/ء/g,'')
+.replace(/[^ء-ي]/g,'');
 }
 
-// تغطية الحروف
-function coverageScore(name, input){
-let score = 0;
-for(let ch of input){
-if(name.includes(ch)) score++;
+// تسلسل
+function hasSequence(name, input){
+let i = 0;
+for(let c of name){
+if(c === input[i]) i++;
+if(i === input.length) return true;
 }
+return false;
+}
+
+// حساب ذكي
+function scoreName(name, input, remaining){
+
+let score = 0;
+
+// تغطية جديدة
+let cover = 0;
+for(let ch of remaining){
+if(name.includes(ch)) cover++;
+}
+if(cover === 0) return 0;
+
+score += cover * 20;
+
+// بداية ونهاية
+if(name.includes(input[0])) score += 5;
+if(name.includes(input[input.length-1])) score += 5;
+
+// تسلسل
+if(hasSequence(name, input)) score += 15;
+
+// متتالية
+if(name.includes(input)) score += 25;
+
+// طول مناسب (تجنب الطويل جدا)
+score -= name.length * 0.5;
+
 return score;
 }
 
-// اختيار اسم حسب شرط
-function pickName(pool, used, condition){
+// اختيار
+function pick(pool, used, remaining){
+
 let best = null;
 
 for(let n of pool){
+
 if(used.includes(n)) continue;
 
 let pure = normalize(n);
-if(!condition(pure)) continue;
 
-let score = coverageScore(pure, input);
+let score = scoreName(pure, input, remaining);
+
+if(score <= 0) continue;
 
 if(!best || score > best.score){
 best = {name:n, score:score};
@@ -82,20 +125,47 @@ function run(){
 input = normalize(document.getElementById("nameInput").value);
 if(!input) return;
 
-let first = input[0];
-let last  = input[input.length - 1];
-
 let used = [];
-let covered = new Set();
+let remaining = new Set(input.split(''));
 
-// 1️⃣ الاسم الأول (البداية)
-let n1 = pickName(single, used, n => n.includes(first)) 
-      || pickName(multi, used, n => n.includes(first));
-
+// 1️⃣
+let n1 = pick(single, used, remaining) || pick(multi, used, remaining);
+if(n1){
 used.push(n1);
-normalize(n1).split('').forEach(c=>covered.add(c));
+normalize(n1).split('').forEach(c => remaining.delete(c));
+}
 
-// 2️⃣ الاسم الثاني (النهاية)
+// 2️⃣
+let n2 = pick(single, used, remaining) || pick(multi, used, remaining);
+if(n2){
+used.push(n2);
+normalize(n2).split('').forEach(c => remaining.delete(c));
+}
+
+// 3️⃣
+let n3 = pick(single, used, remaining) || pick(multi, used, remaining);
+if(n3){
+used.push(n3);
+}
+
+// 🔒 تأكيد الإحاطة
+if(remaining.size > 0){
+document.getElementById("note").innerText =
+"⚠ لم يتم تحقيق الإحاطة الكاملة، سيتم تحسين الاختيار لاحقاً";
+}else{
+document.getElementById("note").innerText =
+"✔ تم تحقيق الإحاطة الكاملة للاسم";
+}
+
+document.getElementById("result").innerHTML =
+used.join(" ✦ ");
+
+}
+
+</script>
+
+</body>
+</html>// 2️⃣ الاسم الثاني (النهاية)
 let n2 = pickName(single, used, n => n.includes(last)) 
       || pickName(multi, used, n => n.includes(last));
 
