@@ -79,6 +79,31 @@ svg{
 .highlight{
   color:#ffcc00;
 }
+  .cards{
+margin-top:30px;
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+.card{
+background:#1a1a1a;
+padding:15px;
+border-radius:12px;
+box-shadow:0 0 10px rgba(0,255,200,0.1);
+text-align:right;
+}
+
+.card h3{
+color:#00ffcc;
+margin-bottom:8px;
+}
+
+.card p{
+color:#ccc;
+font-size:14px;
+line-height:1.6;
+}
 </style>
 </head>
 
@@ -297,32 +322,49 @@ else break;
 }
 
 // عرض مثلث
-let html=`
+let html = `
+
 <div class="triangle">
 
 <svg width="340" height="280">
 <polygon points="170,20 320,250 20,250"
-style="fill:none;stroke:#444;stroke-width:2"/>
+style="fill:none;stroke:#00ffcc;stroke-width:2"/>
 </svg>
 
 <div class="point top">
 <div class="name">${highlight(used[0],input)}</div>
-<div class="desc">${explain(used[0],input,"start")}</div>
 </div>
 
 <div class="point right">
 <div class="name">${highlight(used[1],input)}</div>
-<div class="desc">${explain(used[1],input,"end")}</div>
 </div>
 
 <div class="point left">
 <div class="name">${highlight(used[2],input)}</div>
-<div class="desc">${explain(used[2],input,"fix")}</div>
 </div>
 
 </div>
+
+<div class="cards">
+
+<div class="card">
+<h3>${used[0]}</h3>
+<p>${explain(used[0],input,"start")}</p>
+</div>
+
+<div class="card">
+<h3>${used[1]}</h3>
+<p>${explain(used[1],input,"end")}</p>
+</div>
+
+<div class="card">
+<h3>${used[2]}</h3>
+<p>${explain(used[2],input,"fix")}</p>
+</div>
+
+</div>
+
 `;
-
 document.getElementById("result").innerHTML=html;
 
 }
