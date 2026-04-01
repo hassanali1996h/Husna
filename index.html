@@ -70,26 +70,39 @@ function scoreName(name, input, remaining){
 
 let score = 0;
 
-// تغطية جديدة
+// 🔹 عدد الحروف المشتركة (أهم شيء)
+let common = 0;
+for(let ch of input){
+if(name.includes(ch)) common++;
+}
+score += common * 15;
+
+// 🔹 تغطية جديدة (للإحاطة)
 let cover = 0;
 for(let ch of remaining){
 if(name.includes(ch)) cover++;
 }
-if(cover === 0) return 0;
-
 score += cover * 20;
 
-// بداية ونهاية
-if(name.includes(input[0])) score += 5;
-if(name.includes(input[input.length-1])) score += 5;
+// 🔹 الحرف الأول (مهم)
+if(name.includes(input[0])) score += 10;
 
-// تسلسل
-if(hasSequence(name, input)) score += 15;
+// 🔹 الحرف الثاني (تعزيز قوي)
+if(input[1] && name.includes(input[1])) score += 8;
 
-// متتالية
-if(name.includes(input)) score += 25;
+// 🔹 الحرف الثالث
+if(input[2] && name.includes(input[2])) score += 5;
 
-// طول مناسب (تجنب الطويل جدا)
+// 🔹 الحرف الأخير
+if(name.includes(input[input.length-1])) score += 10;
+
+// 🔹 التسلسل
+if(hasSequence(name, input)) score += 20;
+
+// 🔹 المتتالية
+if(name.includes(input)) score += 30;
+
+// 🔹 تقليل الأسماء الطويلة جداً
 score -= name.length * 0.5;
 
 return score;
