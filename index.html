@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title>مثلث الحسنة</title>
+
 <style>
 body { font-family: Arial; background:#111; color:#fff; text-align:center; padding:40px; }
-input { padding:10px; font-size:18px; width:220px; }
+input { padding:10px; font-size:18px; width:230px; }
 button { padding:10px 20px; font-size:18px; margin-top:15px; cursor:pointer; }
 .result { margin-top:30px; font-size:26px; color:#00ffcc; }
-.note { margin-top:15px; font-size:14px; color:#aaa; }
 </style>
 </head>
 
@@ -21,29 +21,45 @@ button { padding:10px 20px; font-size:18px; margin-top:15px; cursor:pointer; }
 <button onclick="run()">اكشف مثلثك</button>
 
 <div class="result" id="result"></div>
-<div class="note" id="note"></div>
 
 <script>
 
-// 🔒 جميع الأسماء (كما في الملف)
-const allNames = [
-"الرحمن","الرحيم","الملك","القدوس","السلام","المؤمن","المهيمن","العزيز","الجبار","المتكبر",
-"الخالق","البارئ","المصور","الغفار","القهار","الوهاب","الرزاق","الفتاح","العليم","القابض",
-"الباسط","الخافض","الرافع","المعز","المذل","السميع","البصير","الحكم","العدل","اللطيف",
-"الخبير","الحليم","العظيم","الغفور","الشكور","العلي","الكبير","الحفيظ","المقيت","الحسيب",
-"الجليل","الكريم","الرقيب","المجيب","الواسع","الحكيم","الودود","المجيد","الباعث","الشهيد",
-"الحق","الوكيل","القوي","المتين","الولي","الحميد","المحصي","المبدئ","المعيد","المحيي",
-"المميت","الحي","القيوم","الواجد","الماجد","الواحد","الأحد","الصمد","القادر","المقتدر",
-"المقدم","المؤخر","الأول","الآخر","الظاهر","الباطن","الوالي","المتعالي","البر","التواب",
-"المنتقم","العفو","الرؤوف","مالك","ذو الجلال","ذو الإكرام",
-"أحسن الخالقين","خير الرازقين","رب العالمين","مالك يوم الدين","غافر الذنب"
+// 🔒 قائمتك كما هي (بعد حذف التكرار الحرفي فقط)
+let rawNames = [
+"الواحد","العفو","البر","الشهيد","الباری","اللطيف","العظيم","الجبار","الظاهر","الرقيب",
+"الوهاب","الحليم","الصمد","القدوس","السلام","الكفيل","القهار","الواسع","الأول","المجيب",
+"المتين","المجيد","الوكيل","الحق","الأخر","الحميد","الباطن","المبين","القريب","المؤمن",
+"المهيمن","المصور","الهاد","الأحد","الودود","الخبير","الرأوف","الغنى","فعال لما يريد",
+"رب المشرق و المغرب","أشد بأسا","رب المشرقين","رب المغربين","شديد المحال","خير ثوابا",
+"ذي الطول","على كل شيء مقيت","رب السماوات والأرض","خير المنزلين","رب الأرض",
+"رفيع الدرجات","المستعان على ما تصفون","جاعل الملائكة رسلا","خير الوارثين","رب الشعرى",
+"ذو الجلال والاكرام","ذي المعارج","ذو الفضل","شديد العذاب","رب العالمين","غالب على أمره",
+"أشد تنكيلا","خير الفاصلين","رب السماوات","بديع السماوات والأرض","فاطر السماوات والأرض",
+"مخرج ما تحذرون","مخرج ما كنتم تكتمون","مخرج الميت من الحى","الغفور","العليم","الولى",
+"بكل شيء عليم","ولى المؤمنين","الرحمن","الرحيم","الملك","ملك الناس","الخالق","الخلاق",
+"رب الناس","شديد العقاب","سريع العقاب","الحسيب","أسرع الحاسبين","النصير","نعم النصير",
+"القدير","أهل التقوى","القادر","الواق","الأعلى","العلى","الحكيم","أحكم الحاكمين",
+"فالق الاصباح","رب الفلق","ذو العرش","ذي العرش","الكريم","الأكرم","الحي","محي الموتى",
+"قابل التوب","التواب","الكبير","المتكبر","الحفيظ","خير حاف","خير الفات","خير الرازقين",
+"الفتاح","الرزاق","القوي","ذو القوة","بصير بالعباد","البصير","العزيز","رب العزة",
+"المحيط","محيط بالكافرين","القاهر فوق عباده","سميع الدعاء","ذو انتقام","السميع",
+"القيوم","الشكور","نور السماوات والأرض","خير الماكرين","الشاكر","متم نوره","أسرع مكرا",
+"عليم بذات الصدور","غافر الذنب","علام الغيوب","ولى المتقين","ارحم الراحمين","نعم المولى",
+"ذو الرحمة","مالك الملك","خالق كل شيء","الله الناس","خير عقبا","سريع الحساب",
+"خير الناصرين","المقتدر","المتعال","خير الحاكمين","فالق الحب والنوى","رب العرش",
+"مالك يوم الدين","أحسن الخالقين","جامع الناس","ذو عقاب اليم","أهل المغفرة",
+"واسع المغفرة","عالم الغيب والشهادة","الوال","خير الراحمين","مليك","خير الغافرين",
+"بكل خلق عليم","ولى الذين أمنوا","ذو مغفرة"
 ];
+
+// حذف التكرار الحرفي فقط
+const allNames = [...new Set(rawNames)];
 
 // فصل
 const single = allNames.filter(n => !n.includes(" "));
 const multi  = allNames.filter(n => n.includes(" "));
 
-// 🔥 Normalize قوي
+// 🔥 normalize (مع الحفاظ على الهمزة)
 function normalize(str){
 return str
 .replace(/[ًٌٍَُِّْ]/g,'')
@@ -51,8 +67,8 @@ return str
 .replace(/ى/g,'ي')
 .replace(/ؤ/g,'و')
 .replace(/ئ/g,'ي')
-.replace(/ء/g,'')
-.replace(/[^ء-ي]/g,'');
+.replace(/\bال/g,'') // حذف "ال" فقط بالبداية
+.replace(/\s/g,'');  // حذف الفراغات
 }
 
 // تسلسل
@@ -65,51 +81,37 @@ if(i === input.length) return true;
 return false;
 }
 
-// حساب ذكي
-function scoreName(name, input, remaining){
+// تقييم
+function scoreName(name, input, needed, isSingle){
 
 let score = 0;
 
-// 🔹 عدد الحروف المشتركة (أهم شيء)
-let common = 0;
-for(let ch of input){
-if(name.includes(ch)) common++;
+// تغطية
+for(let ch of needed){
+if(name.includes(ch)) score += 25;
 }
-score += common * 15;
 
-// 🔹 تغطية جديدة (للإحاطة)
-let cover = 0;
-for(let ch of remaining){
-if(name.includes(ch)) cover++;
-}
-score += cover * 20;
+// دعم الحروف الأولى
+if(name.includes(input[0])) score += 15;
+if(input[1] && name.includes(input[1])) score += 10;
+if(name.includes(input[input.length-1])) score += 15;
 
-// 🔹 الحرف الأول (مهم)
-if(name.includes(input[0])) score += 10;
-
-// 🔹 الحرف الثاني (تعزيز قوي)
-if(input[1] && name.includes(input[1])) score += 8;
-
-// 🔹 الحرف الثالث
-if(input[2] && name.includes(input[2])) score += 5;
-
-// 🔹 الحرف الأخير
-if(name.includes(input[input.length-1])) score += 10;
-
-// 🔹 التسلسل
+// تسلسل
 if(hasSequence(name, input)) score += 20;
 
-// 🔹 المتتالية
+// متتالية
 if(name.includes(input)) score += 30;
 
-// 🔹 تقليل الأسماء الطويلة جداً
-score -= name.length * 0.5;
+// أولوية الفردي
+if(isSingle) score += 20;
+
+// تقليل المركب
+if(!isSingle) score -= 10;
 
 return score;
 }
 
-// اختيار
-function pick(pool, used, remaining){
+function pick(pool, used, needed, isSingle){
 
 let best = null;
 
@@ -118,13 +120,12 @@ for(let n of pool){
 if(used.includes(n)) continue;
 
 let pure = normalize(n);
+let s = scoreName(pure, input, needed, isSingle);
 
-let score = scoreName(pure, input, remaining);
+if(s <= 0) continue;
 
-if(score <= 0) continue;
-
-if(!best || score > best.score){
-best = {name:n, score:score};
+if(!best || s > best.score){
+best = {name:n, score:s};
 }
 }
 
@@ -141,59 +142,43 @@ if(!input) return;
 let used = [];
 let remaining = new Set(input.split(''));
 
-// 1️⃣
-let n1 = pick(single, used, remaining) || pick(multi, used, remaining);
+// 1 البداية
+let n1 = pick(single, used, new Set([input[0]]), true)
+      || pick(multi, used, new Set([input[0]]), false);
+
 if(n1){
 used.push(n1);
 normalize(n1).split('').forEach(c => remaining.delete(c));
 }
 
-// 2️⃣
-let n2 = pick(single, used, remaining) || pick(multi, used, remaining);
+// 2 النهاية
+let n2 = pick(single, used, new Set([input[input.length-1]]), true)
+      || pick(multi, used, new Set([input[input.length-1]]), false);
+
 if(n2){
 used.push(n2);
 normalize(n2).split('').forEach(c => remaining.delete(c));
 }
 
-// 3️⃣
-let n3 = pick(single, used, remaining) || pick(multi, used, remaining);
-if(n3){
-used.push(n3);
+// 3 الإكمال
+let n3 = pick(single, used, remaining, true)
+      || pick(multi, used, remaining, false);
+
+if(!n3){
+n3 = pick(single, used, new Set(input.split('')), true)
+   || pick(multi, used, new Set(input.split('')), false);
 }
 
-// 🔒 تأكيد الإحاطة
-if(remaining.size > 0){
-document.getElementById("note").innerText =
-"⚠ لم يتم تحقيق الإحاطة الكاملة، سيتم تحسين الاختيار لاحقاً";
-}else{
-document.getElementById("note").innerText =
-"✔ تم تحقيق الإحاطة الكاملة للاسم";
+if(n3) used.push(n3);
+
+// ضمان 3
+while(used.length < 3){
+let extra = pick(single, used, new Set(input.split('')), true)
+         || pick(multi, used, new Set(input.split('')), false);
+if(extra) used.push(extra);
+else break;
 }
 
-document.getElementById("result").innerHTML =
-used.join(" ✦ ");
-
-}
-
-</script>
-
-</body>
-</html>// 2️⃣ الاسم الثاني (النهاية)
-let n2 = pickName(single, used, n => n.includes(last)) 
-      || pickName(multi, used, n => n.includes(last));
-
-used.push(n2);
-normalize(n2).split('').forEach(c=>covered.add(c));
-
-// 3️⃣ الاسم الثالث (إكمال)
-let n3 = pickName(single, used, n => {
-let need = [...input].some(c => !covered.has(c));
-return need && coverageScore(n, input) > 0;
-}) || pickName(multi, used, n => true);
-
-used.push(n3);
-
-// عرض
 document.getElementById("result").innerHTML =
 used.join(" ✦ ");
 
