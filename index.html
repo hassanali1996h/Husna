@@ -43,7 +43,7 @@ button {
 
 <script>
 
-// 🔒 قائمتك بعد حذف التكرار الحرفي فقط
+// 🔒 قائمتك (بعد حذف التكرار الحرفي فقط)
 const rawNames = [
 "الواحد","العفو","البر","الشهيد","الباری","اللطيف","العظيم","الجبار","الظاهر","الرقيب",
 "الوهاب","الحليم","الصمد","القدوس","السلام","الكفيل","القهار","الواسع","الأول","المجيب",
@@ -71,13 +71,11 @@ const rawNames = [
 "بكل خلق عليم","ولى الذين أمنوا","ذو مغفرة"
 ];
 
-// حذف التكرار الحرفي
 const allNames = [...new Set(rawNames)];
-
 const single = allNames.filter(n => !n.includes(" "));
 const multi  = allNames.filter(n => n.includes(" "));
 
-// 🔥 normalize نهائي
+// 🔥 normalize (نهائي)
 function normalize(str){
 return str
 .replace(/[ًٌٍَُِّْ]/g,'')
@@ -99,10 +97,140 @@ if(i === input.length) return true;
 return false;
 }
 
-// تقييم
+// تقييم نهائي
 function score(name, input, needed, isSingle){
 
+// ❌ منع اسم لا يخدم الحروف المطلوبة
+let covers = false;
+for(let ch of needed){
+if(name.includes(ch)) covers = true;
+}
+if(!covers) return 0;
+
 let s = 0;
+
+// تغطية قوية
+for(let ch of needed){
+if(name.includes(ch)) s += 50;
+}
+
+// أول / ثاني / آخر
+if(name.includes(input[0])) s += 20;
+if(input[1] && name.includes(input[1])) s += 10;
+if(name.includes(input[input.length-1])) s += 20;
+
+// تسلسل
+if(hasSequence(name, input)) s += 20;
+
+// متتالية
+if(name.includes(input)) s += 30;
+
+// أولوية الفردي
+if(isSingle) s += 25;
+else s -= 10;
+
+return s;
+}
+
+function pick(pool, used, needed, isSingle){
+
+let best = null;
+
+for(let n of pool){
+
+if(used.includes(n)) continue;
+
+let pure = normalize(n);
+let sc = score(pure, input, needed, isSingle);
+
+if(sc <= 0) continue;
+
+if(!best || sc > best.score){
+best = {name:n, score:sc};
+}
+}
+
+return best ? best.name : null;
+}
+
+let input;
+
+function run(){
+
+let raw = document.getElementById("nameInput").value;
+
+// 🔒 تثبيت (بر = البر)
+let normalized = normalize(raw);
+
+if(normalized.startsWith("ال")){
+normalized = normalized.slice(2);
+}
+
+input = normalized;
+if(!input) return;
+
+let used = [];
+let remaining = new Set(input.split(''));
+
+// 1️⃣ البداية
+let n1 = pick(single, used, new Set([input[0]]), true)
+      || pick(multi, used, new Set([input[0]]), false);
+
+if(n1){
+used.push(n1);
+normalize(n1).split('').forEach(c => remaining.delete(c));
+}
+
+// 2️⃣ النهاية
+let n2 = pick(single, used, new Set([input[input.length-1]]), true)
+      || pick(multi, used, new Set([input[input.length-1]]), false);
+
+if(n2){
+used.push(n2);
+normalize(n2).split('').forEach(c => remaining.delete(c));
+}
+
+// 3️⃣ الإغلاق (ذكي)
+let n3;
+
+if(remaining.size === 0){
+
+n3 = pick(single, used, new Set([input[0], input[input.length-1]]), true)
+   || pick(single, used, new Set(input.split('')), true)
+   || pick(multi, used, new Set(input.split('')), false);
+
+}else{
+
+n3 = pick(single, used, remaining, true)
+   || pick(multi, used, remaining, false);
+
+}
+
+if(!n3){
+n3 = pick(single, used, new Set(input.split('')), true)
+   || pick(multi, used, new Set(input.split('')), false);
+}
+
+if(n3) used.push(n3);
+
+// ضمان 3 أسماء
+while(used.length < 3){
+let extra = pick(single, used, new Set(input.split('')), true)
+         || pick(multi, used, new Set(input.split('')), false);
+if(extra) used.push(extra);
+else break;
+}
+
+// عرض
+document.getElementById("result").innerHTML =
+used.join(" ✦ ");
+
+}
+
+</script>
+
+</body>
+</html>let s = 0;
 
 // تغطية
 for(let ch of needed){
