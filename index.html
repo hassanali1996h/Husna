@@ -5,10 +5,29 @@
 <title>مثلث الحسنة</title>
 
 <style>
-body { font-family: Arial; background:#111; color:#fff; text-align:center; padding:40px; }
-input { padding:10px; font-size:18px; width:230px; }
-button { padding:10px 20px; font-size:18px; margin-top:15px; cursor:pointer; }
-.result { margin-top:30px; font-size:26px; color:#00ffcc; }
+body {
+  font-family: Arial;
+  background:#111;
+  color:#fff;
+  text-align:center;
+  padding:40px;
+}
+input {
+  padding:10px;
+  font-size:18px;
+  width:230px;
+}
+button {
+  padding:10px 20px;
+  font-size:18px;
+  margin-top:15px;
+  cursor:pointer;
+}
+.result {
+  margin-top:30px;
+  font-size:26px;
+  color:#00ffcc;
+}
 </style>
 </head>
 
@@ -24,8 +43,8 @@ button { padding:10px 20px; font-size:18px; margin-top:15px; cursor:pointer; }
 
 <script>
 
-// 🔒 قائمتك كما هي (بعد حذف التكرار الحرفي فقط)
-let rawNames = [
+// 🔒 قائمتك بعد حذف التكرار الحرفي فقط
+const rawNames = [
 "الواحد","العفو","البر","الشهيد","الباری","اللطيف","العظيم","الجبار","الظاهر","الرقيب",
 "الوهاب","الحليم","الصمد","القدوس","السلام","الكفيل","القهار","الواسع","الأول","المجيب",
 "المتين","المجيد","الوكيل","الحق","الأخر","الحميد","الباطن","المبين","القريب","المؤمن",
@@ -52,14 +71,13 @@ let rawNames = [
 "بكل خلق عليم","ولى الذين أمنوا","ذو مغفرة"
 ];
 
-// حذف التكرار الحرفي فقط
+// حذف التكرار الحرفي
 const allNames = [...new Set(rawNames)];
 
-// فصل
 const single = allNames.filter(n => !n.includes(" "));
 const multi  = allNames.filter(n => n.includes(" "));
 
-// 🔥 normalize (مع الحفاظ على الهمزة)
+// 🔥 normalize نهائي
 function normalize(str){
 return str
 .replace(/[ًٌٍَُِّْ]/g,'')
@@ -67,8 +85,8 @@ return str
 .replace(/ى/g,'ي')
 .replace(/ؤ/g,'و')
 .replace(/ئ/g,'ي')
-.replace(/\bال/g,'') // حذف "ال" فقط بالبداية
-.replace(/\s/g,'');  // حذف الفراغات
+.replace(/^ال/, '') // فقط بالبداية
+.replace(/\s/g,''); // حذف الفراغ
 }
 
 // تسلسل
@@ -82,27 +100,125 @@ return false;
 }
 
 // تقييم
-function scoreName(name, input, needed, isSingle){
+function score(name, input, needed, isSingle){
 
-let score = 0;
+let s = 0;
 
 // تغطية
 for(let ch of needed){
-if(name.includes(ch)) score += 25;
+if(name.includes(ch)) s += 30;
 }
 
-// دعم الحروف الأولى
-if(name.includes(input[0])) score += 15;
-if(input[1] && name.includes(input[1])) score += 10;
-if(name.includes(input[input.length-1])) score += 15;
+// أول حرف
+if(name.includes(input[0])) s += 20;
+
+// ثاني حرف
+if(input[1] && name.includes(input[1])) s += 10;
+
+// آخر حرف
+if(name.includes(input[input.length-1])) s += 20;
 
 // تسلسل
-if(hasSequence(name, input)) score += 20;
+if(hasSequence(name, input)) s += 20;
 
 // متتالية
-if(name.includes(input)) score += 30;
+if(name.includes(input)) s += 30;
 
 // أولوية الفردي
+if(isSingle) s += 25;
+else s -= 10;
+
+return s;
+}
+
+function pick(pool, used, needed, isSingle){
+
+let best = null;
+
+for(let n of pool){
+
+if(used.includes(n)) continue;
+
+let pure = normalize(n);
+let sc = score(pure, input, needed, isSingle);
+
+if(sc <= 0) continue;
+
+if(!best || sc > best.score){
+best = {name:n, score:sc};
+}
+}
+
+return best ? best.name : null;
+}
+
+let input;
+
+function run(){
+
+let raw = document.getElementById("nameInput").value;
+
+// 🔒 تثبيت النتيجة (بر = البر)
+let normalizedInput = normalize(raw);
+
+if(normalizedInput.startsWith("ال")){
+normalizedInput = normalizedInput.slice(2);
+}
+
+input = normalizedInput;
+
+if(!input) return;
+
+let used = [];
+let remaining = new Set(input.split(''));
+
+// 1 البداية
+let n1 = pick(single, used, new Set([input[0]]), true)
+      || pick(multi, used, new Set([input[0]]), false);
+
+if(n1){
+used.push(n1);
+normalize(n1).split('').forEach(c => remaining.delete(c));
+}
+
+// 2 النهاية
+let n2 = pick(single, used, new Set([input[input.length-1]]), true)
+      || pick(multi, used, new Set([input[input.length-1]]), false);
+
+if(n2){
+used.push(n2);
+normalize(n2).split('').forEach(c => remaining.delete(c));
+}
+
+// 3 الإكمال
+let n3 = pick(single, used, remaining, true)
+      || pick(multi, used, remaining, false);
+
+if(!n3){
+n3 = pick(single, used, new Set(input.split('')), true)
+   || pick(multi, used, new Set(input.split('')), false);
+}
+
+if(n3) used.push(n3);
+
+// ضمان 3
+while(used.length < 3){
+let extra = pick(single, used, new Set(input.split('')), true)
+         || pick(multi, used, new Set(input.split('')), false);
+if(extra) used.push(extra);
+else break;
+}
+
+// عرض
+document.getElementById("result").innerHTML =
+used.join(" ✦ ");
+
+}
+
+</script>
+
+</body>
+</html>// أولوية الفردي
 if(isSingle) score += 20;
 
 // تقليل المركب
